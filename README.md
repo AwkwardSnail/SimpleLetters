@@ -11,16 +11,31 @@ stay the way you left them.
 - **Windows:** coming soon to the Microsoft Store.
 - **Build it yourself (free):** see below.
 
+## Using it
+
+- **Margins:** the four arrows around the page mark the margins. The two above
+  the page are the left and right margins; the two beside it are the top and
+  bottom. Click an arrow to show or hide a solid line where that margin is, and
+  drag it to move the margin.
+- **Text size:** the − and + buttons in the toolbar.
+- **Open, Save, Print, Undo, Redo:** toolbar buttons, or Ctrl+O, Ctrl+S, Ctrl+P,
+  Ctrl+Z and Ctrl+Y. Documents are saved as plain `.txt` files; the margins and
+  text size are remembered by the app.
+
 ## Running
 
-The browser version is `index.html`, `app.js` and `styles.css`. Serve the folder
-and open it:
+The Windows version is a .NET 10 WPF app in `desktop/SimpleLetters`:
+
+```
+dotnet run --project desktop/SimpleLetters
+```
+
+There's also an earlier browser version (`index.html`, `app.js`, `styles.css`)
+with just margins and text size. Serve the folder and open it:
 
 ```
 python -m http.server 8174
 ```
-
-Then open http://localhost:8174. Ctrl+P prints the page on A4.
 
 ## Font
 
