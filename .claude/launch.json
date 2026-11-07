@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "simpleletters-web",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8174", "--directory", "C:/Users/felip/OneDrive/Documents/SoftwareProjects/SimpleLetters"],
+      "port": 8174
+    }
+  ]
+}

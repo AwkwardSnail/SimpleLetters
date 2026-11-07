@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en-AU">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SimpleLetters</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="bar">
+    <div class="brand">SimpleLetters</div>
+
+    <form class="settings" autocomplete="off" onsubmit="return false">
+      <fieldset>
+        <legend>Margins (mm)</legend>
+        <label>Top <input type="number" id="m-top" min="0" max="100" step="1"></label>
+        <label>Bottom <input type="number" id="m-bottom" min="0" max="100" step="1"></label>
+        <label>Left <input type="number" id="m-left" min="0" max="80" step="1"></label>
+        <label>Right <input type="number" id="m-right" min="0" max="80" step="1"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Text</legend>
+        <label>Size (pt) <input type="number" id="font-size" min="6" max="72" step="1"></label>
+      </fieldset>
+    </form>
+  </header>
+
+  <main class="desk">
+    <div class="page" id="page">
+      <textarea id="text" spellcheck="true" aria-label="Page text"></textarea>
+    </div>
+    <p class="note" id="overflow" hidden>The text runs past the bottom of the page.</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

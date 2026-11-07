@@ -1,0 +1,141 @@
+/* Atkinson Hyperlegible Next: SIL Open Font License 1.1 (see fonts/OFL.txt).
+   Bundled locally so the app never fetches anything from the network. */
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('fonts/AtkinsonHyperlegibleNext-Variable.ttf') format('truetype');
+  font-weight: 200 800;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Atkinson Hyperlegible Next';
+  src: url('fonts/AtkinsonHyperlegibleNext-Italic-Variable.ttf') format('truetype');
+  font-weight: 200 800;
+  font-style: italic;
+}
+
+:root {
+  --bg: #0d0f0c;
+  --bar: #121510;
+  --line: #24301f;
+  --green: #7fdc8a;
+  --green-dim: #4f8a56;
+  --paper: #fdfdfb;
+  --ink: #1a1a1a;
+  --font: 'Atkinson Hyperlegible Next', system-ui, sans-serif;
+
+  /* Set from app.js */
+  --m-top: 25mm;
+  --m-bottom: 25mm;
+  --m-left: 25mm;
+  --m-right: 25mm;
+  --font-size: 12pt;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--green);
+  font-family: var(--font);
+  font-size: 15px;
+}
+
+/* ---------- Settings bar ---------- */
+.bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 28px;
+  padding: 10px 20px;
+  background: var(--bar);
+  border-bottom: 1px solid var(--line);
+}
+
+.brand {
+  font-family: Consolas, 'Cascadia Mono', ui-monospace, monospace;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+}
+
+.settings { display: flex; flex-wrap: wrap; gap: 12px 28px; }
+
+fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+legend {
+  float: left;
+  margin-right: 4px;
+  color: var(--green-dim);
+}
+
+label { display: inline-flex; align-items: center; gap: 6px; }
+
+input[type=number] {
+  width: 4.2em;
+  padding: 3px 4px;
+  font: inherit;
+  color: var(--green);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+input[type=number]:focus { outline: 2px solid var(--green-dim); outline-offset: 1px; }
+
+/* ---------- The page ---------- */
+.desk {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 16px 64px;
+  overflow-x: auto;
+}
+
+.page {
+  flex: none;
+  width: 210mm;
+  height: 297mm;
+  padding: var(--m-top) var(--m-right) var(--m-bottom) var(--m-left);
+  background: var(--paper);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.6);
+}
+
+.page textarea {
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  background: transparent;
+  color: var(--ink);
+  caret-color: var(--ink);
+  font-family: var(--font);
+  font-size: var(--font-size);
+  line-height: 1.4;
+}
+
+.note { margin: 14px 0 0; color: var(--green-dim); }
+
+/* ---------- Printing: just the page, edge to edge ---------- */
+@page { size: A4; margin: 0; }
+
+@media print {
+  body { background: none; }
+  .bar, .note { display: none !important; }
+  .desk { padding: 0; display: block; }
+  .page { box-shadow: none; }
+}
