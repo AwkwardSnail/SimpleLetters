@@ -1,7 +1,6 @@
 using System.ComponentModel;
 using System.IO;
 using System.Printing;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -9,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using System.Xml;
 using Microsoft.Win32;
 
 namespace SimpleLetters;
@@ -24,13 +24,25 @@ public partial class MainWindow : Window
     const double MinFontPt = 6;
     const double MaxFontPt = 72;
 
-    const string FileFilter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+    const string OpenFilter = "Letters and text files (*.sletter;*.txt)|*.sletter;*.txt|SimpleLetters documents (*.sletter)|*.sletter|Text files (*.txt)|*.txt";
+    const string SaveFilter = "SimpleLetters document (*.sletter)|*.sletter";
 
     static double Dip(double mm) => mm * 96.0 / 25.4;
     static double Mm(double dip) => dip * 25.4 / 96.0;
     static double PtToDip(double pt) => pt * 96.0 / 72.0;
+    static double DipToPt(double dip) => Math.Round(dip * 72.0 / 96.0 * 2) / 2;
 
     static readonly Brush GuideBrush = Frozen(new SolidColorBrush(Color.FromRgb(0x3C, 0x8C, 0x48)));
+
+    // Ctrl shortcuts the page accepts. Everything else (Ctrl+B, Ctrl+I, Ctrl+E,
+    // Ctrl+] and so on) would add formatting SimpleLetters doesn't offer.
+    static readonly HashSet<Key> AllowedCtrlKeys =
+    [
+        Key.A, Key.C, Key.V, Key.X, Key.Z, Key.Y, Key.O, Key.S, Key.P,
+        Key.Left, Key.Right, Key.Up, Key.Down, Key.Home, Key.End, Key.PageUp, Key.PageDown,
+        Key.Back, Key.Delete, Key.Insert, Key.Tab,
+        Key.LeftCtrl, Key.RightCtrl, Key.LeftShift, Key.RightShift, Key.LeftAlt, Key.RightAlt,
+    ];
 
     readonly Settings settings = Settings.Load();
     readonly Dictionary<Side, MarginHandle> handles = new();
@@ -41,6 +53,9 @@ public partial class MainWindow : Window
     string? filePath;
     bool dirty;
     bool settingText;
+
+    /// <summary>The size new writing comes out in. Follows the caret, and the − and + buttons.</summary>
+    double currentSizePt;
 
     // Dragging a margin arrow.
     Side? dragSide;
@@ -85,11 +100,13 @@ public partial class MainWindow : Window
         }
         Guides.Children.Add(valueLabel);
 
-        ApplyFontSize();
+        currentSizePt = Math.Clamp(settings.FontSize, MinFontPt, MaxFontPt);
+        ShowLetter(new Letter { Paragraphs = { new LetterParagraph { SizePt = currentSizePt } } });
         UpdateLayoutForMargins();
+        UpdateSizeControls();
         UpdateTitle();
 
-        // Open a file passed on the command line (e.g. "Open with").
+        // Open a file passed on the command line (e.g. double-clicking a .sletter file).
         var args = Environment.GetCommandLineArgs();
         if (args.Length > 1 && File.Exists(args[1]))
             LoadFile(args[1]);
@@ -144,7 +161,7 @@ public partial class MainWindow : Window
         CheckOverflow();
     }
 
-    /// <summary>Shows "25 mm" beside an arrow while it is being dragged or has keyboard focus.</summary>
+    /// <summary>Shows "Left margin 25 mm" beside an arrow while it is being dragged or has keyboard focus.</summary>
     void UpdateValueLabel()
     {
         Side? side = dragSide is { } d && dragMoved ? d
@@ -189,6 +206,7 @@ public partial class MainWindow : Window
         if (mm == settings.GetMargin(side)) return;
 
         settings.SetMargin(side, mm);
+        MarkDirty(); // margins are saved with the letter
         UpdateLayoutForMargins();
     }
 
@@ -285,36 +303,115 @@ public partial class MainWindow : Window
     }
 
     // -------------------------------------------------------------- Text size
+    //
+    // − and + change the size of what is typed next, from the caret onwards.
+    // Text already on the page keeps its size.
 
-    void ApplyFontSize()
+    void UpdateSizeControls()
     {
-        Editor.FontSize = PtToDip(settings.FontSize);
-        SizeLabel.Text = $"{settings.FontSize:0} pt";
-        SmallerButton.IsEnabled = settings.FontSize > MinFontPt;
-        LargerButton.IsEnabled = settings.FontSize < MaxFontPt;
-        CheckOverflow();
+        SizeLabel.Text = $"{currentSizePt:0.#} pt";
+        SmallerButton.IsEnabled = currentSizePt > MinFontPt;
+        LargerButton.IsEnabled = currentSizePt < MaxFontPt;
     }
 
     void ChangeFontSize(double delta)
     {
-        settings.FontSize = Math.Clamp(settings.FontSize + delta, MinFontPt, MaxFontPt);
+        currentSizePt = Math.Clamp(Math.Round(currentSizePt) + delta, MinFontPt, MaxFontPt);
+        settings.FontSize = currentSizePt; // new letters start at the last size used
         settings.Save();
-        ApplyFontSize();
+        UpdateSizeControls();
+        Editor.LockCurrentUndoUnit();
+        PrepareSizeForTyping();
+        Editor.Focus();
     }
 
     void Smaller_Click(object sender, RoutedEventArgs e) => ChangeFontSize(-1);
     void Larger_Click(object sender, RoutedEventArgs e) => ChangeFontSize(1);
 
+    /// <summary>
+    /// With nothing selected, sets the size the next typed text will use at the
+    /// caret, without touching any text already there.
+    /// </summary>
+    void PrepareSizeForTyping()
+    {
+        var selection = Editor.Selection;
+        if (!selection.IsEmpty) return;
+        double dip = PtToDip(currentSizePt);
+        if (selection.GetPropertyValue(TextElement.FontSizeProperty) is double existing && Math.Abs(existing - dip) < 0.01)
+            return;
+        selection.ApplyPropertyValue(TextElement.FontSizeProperty, dip);
+    }
+
     // ------------------------------------------------------------------ Editor
+
+    void MarkDirty()
+    {
+        if (settingText || dirty) return;
+        dirty = true;
+        UpdateTitle();
+    }
 
     void Editor_TextChanged(object sender, TextChangedEventArgs e)
     {
-        if (!settingText && !dirty)
-        {
-            dirty = true;
-            UpdateTitle();
-        }
+        MarkDirty();
         CheckOverflow();
+    }
+
+    /// <summary>Moving the caret picks up the size of the text it is in.</summary>
+    void Editor_SelectionChanged(object sender, RoutedEventArgs e)
+    {
+        if (settingText) return;
+        if (Editor.Selection.GetPropertyValue(TextElement.FontSizeProperty) is double dip)
+        {
+            currentSizePt = Math.Clamp(DipToPt(dip), MinFontPt, MaxFontPt);
+            UpdateSizeControls();
+        }
+    }
+
+    void Editor_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        // WPF would otherwise undo all continuous typing in one go; start a
+        // new undo step at each word instead.
+        if (e.Text == " ") Editor.LockCurrentUndoUnit();
+        PrepareSizeForTyping();
+    }
+
+    void Editor_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        var key = e.Key == Key.System ? e.SystemKey : e.Key;
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && !AllowedCtrlKeys.Contains(key))
+        {
+            e.Handled = true; // no bold, italic, alignment, lists, etc.
+            return;
+        }
+
+        // A new line, or moving the caret, starts a new undo step.
+        if (key is Key.Enter or Key.Left or Key.Right or Key.Up or Key.Down
+                or Key.Home or Key.End or Key.PageUp or Key.PageDown)
+            Editor.LockCurrentUndoUnit();
+        if (key == Key.Enter) PrepareSizeForTyping(); // the new line starts in the current size
+    }
+
+    void Editor_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) => Editor.LockCurrentUndoUnit();
+
+    /// <summary>Pastes as plain text in the current size, never with outside formatting.</summary>
+    void Editor_Pasting(object sender, DataObjectPastingEventArgs e)
+    {
+        e.CancelCommand();
+        if (e.DataObject.GetData(DataFormats.UnicodeText) is not string text) return;
+
+        Editor.BeginChange();
+        try
+        {
+            var selection = Editor.Selection;
+            selection.Text = text.Replace("\r\n", "\n").Replace('\r', '\n');
+            selection.ApplyPropertyValue(TextElement.FontSizeProperty, PtToDip(currentSizePt));
+            selection.Select(selection.End, selection.End);
+        }
+        finally
+        {
+            Editor.EndChange();
+        }
     }
 
     /// <summary>The page doesn't scroll on its own: the mouse wheel scrolls the desk.</summary>
@@ -340,39 +437,72 @@ public partial class MainWindow : Window
 
     void UpdateTitle() => Title = $"{(dirty ? "*" : "")}{DocumentName} – SimpleLetters";
 
+    Letter CurrentLetter()
+    {
+        var letter = Letter.FromFlowDocument(Editor.Document);
+        letter.MarginTop = settings.MarginTop;
+        letter.MarginBottom = settings.MarginBottom;
+        letter.MarginLeft = settings.MarginLeft;
+        letter.MarginRight = settings.MarginRight;
+        return letter;
+    }
+
+    /// <summary>Puts a letter on the page, with a fresh undo history.</summary>
+    void ShowLetter(Letter letter)
+    {
+        settingText = true;
+        try
+        {
+            Editor.Document = letter.ToFlowDocument(Editor.FontFamily, Editor.Foreground, currentSizePt);
+            Editor.CaretPosition = Editor.Document.ContentStart;
+        }
+        finally
+        {
+            settingText = false;
+        }
+        Editor_SelectionChanged(Editor, new RoutedEventArgs());
+        CheckOverflow();
+    }
+
     void Open_Executed(object sender, ExecutedRoutedEventArgs e)
     {
         if (!ConfirmDiscard()) return;
-        var dialog = new OpenFileDialog { Filter = FileFilter };
+        var dialog = new OpenFileDialog { Filter = OpenFilter };
         if (dialog.ShowDialog(this) == true)
             LoadFile(dialog.FileName);
     }
 
     void LoadFile(string path)
     {
-        string text;
+        bool isLetter = string.Equals(System.IO.Path.GetExtension(path), Letter.Extension, StringComparison.OrdinalIgnoreCase);
+        Letter letter;
         try
         {
-            text = File.ReadAllText(path);
+            letter = isLetter ? Letter.Load(path) : Letter.FromPlainText(File.ReadAllText(path), currentSizePt);
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or XmlException or FormatException)
         {
             MessageBox.Show(this, $"SimpleLetters couldn't open that file.\n\n{ex.Message}", "SimpleLetters",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
-        settingText = true;
-        Editor.Text = text;
-        // Start a fresh undo history for the new document.
-        Editor.IsUndoEnabled = false;
-        Editor.IsUndoEnabled = true;
-        settingText = false;
+        if (isLetter)
+        {
+            settings.MarginTop = letter.MarginTop;
+            settings.MarginBottom = letter.MarginBottom;
+            settings.MarginLeft = letter.MarginLeft;
+            settings.MarginRight = letter.MarginRight;
+            settings.Save();
+        }
 
-        Editor.CaretIndex = 0;
-        Editor.ScrollToHome();
-        filePath = path;
-        dirty = false;
+        ShowLetter(letter);
+        UpdateLayoutForMargins();
+        Desk.ScrollToHome();
+
+        // A text file is brought in as a new letter: saving asks where to put the .sletter.
+        filePath = isLetter ? path : null;
+        dirty = !isLetter;
         UpdateTitle();
     }
 
@@ -384,14 +514,14 @@ public partial class MainWindow : Window
         string? path = filePath;
         if (path is null)
         {
-            var dialog = new SaveFileDialog { Filter = FileFilter, DefaultExt = ".txt", FileName = "Untitled.txt" };
+            var dialog = new SaveFileDialog { Filter = SaveFilter, DefaultExt = Letter.Extension, FileName = DocumentName + Letter.Extension };
             if (dialog.ShowDialog(this) != true) return false;
             path = dialog.FileName;
         }
 
         try
         {
-            File.WriteAllText(path, Editor.Text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            CurrentLetter().Save(path);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -434,27 +564,14 @@ public partial class MainWindow : Window
         dialog.PrintTicket.PageMediaSize = new PageMediaSize(PageMediaSizeName.ISOA4);
         if (dialog.ShowDialog() != true) return;
 
-        var document = new FlowDocument
-        {
-            PageWidth = Dip(PageWidthMm),
-            PageHeight = Dip(PageHeightMm),
-            PagePadding = new Thickness(Dip(settings.MarginLeft), Dip(settings.MarginTop),
-                                        Dip(settings.MarginRight), Dip(settings.MarginBottom)),
-            ColumnWidth = double.PositiveInfinity,
-            FontFamily = Editor.FontFamily,
-            FontSize = Editor.FontSize,
-            Foreground = Brushes.Black,
-            TextAlignment = TextAlignment.Left,
-        };
-
-        var paragraph = new Paragraph { Margin = new Thickness(0) };
-        var lines = Editor.Text.Replace("\r\n", "\n").Split('\n');
-        for (int i = 0; i < lines.Length; i++)
-        {
-            if (i > 0) paragraph.Inlines.Add(new LineBreak());
-            paragraph.Inlines.Add(new Run(lines[i]));
-        }
-        document.Blocks.Add(paragraph);
+        // Print a copy built from the same model that gets saved, so the page
+        // prints exactly as it would reopen.
+        var document = CurrentLetter().ToFlowDocument(Editor.FontFamily, Brushes.Black, currentSizePt);
+        document.PageWidth = Dip(PageWidthMm);
+        document.PageHeight = Dip(PageHeightMm);
+        document.PagePadding = new Thickness(Dip(settings.MarginLeft), Dip(settings.MarginTop),
+                                             Dip(settings.MarginRight), Dip(settings.MarginBottom));
+        document.ColumnWidth = double.PositiveInfinity;
 
         try
         {

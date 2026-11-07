@@ -20,7 +20,7 @@
         <TextBlock Text="SimpleLetters" FontFamily="Consolas" FontSize="20"
                    VerticalAlignment="Center" Margin="0,0,24,0"/>
 
-        <Button Style="{StaticResource ToolButton}" Command="Open" Content="Open" ToolTip="Open a text file (Ctrl+O)"/>
+        <Button Style="{StaticResource ToolButton}" Command="Open" Content="Open" ToolTip="Open a letter (Ctrl+O)"/>
         <Button Style="{StaticResource ToolButton}" Command="Save" Content="Save" ToolTip="Save (Ctrl+S)"/>
         <Button Style="{StaticResource ToolButton}" Command="Print" Content="Print" ToolTip="Print on A4 (Ctrl+P)"/>
 
@@ -36,10 +36,10 @@
         <TextBlock Text="Text size" Foreground="{StaticResource GreenDimBrush}"
                    VerticalAlignment="Center" Margin="0,0,10,0"/>
         <Button x:Name="SmallerButton" Style="{StaticResource StepperButton}" Content="−"
-                Click="Smaller_Click" ToolTip="Smaller text"/>
+                Click="Smaller_Click" ToolTip="Smaller text from here on"/>
         <TextBlock x:Name="SizeLabel" Text="12 pt" MinWidth="56" TextAlignment="Center" VerticalAlignment="Center"/>
         <Button x:Name="LargerButton" Style="{StaticResource StepperButton}" Content="+"
-                Click="Larger_Click" ToolTip="Larger text"/>
+                Click="Larger_Click" ToolTip="Larger text from here on"/>
       </WrapPanel>
     </Border>
 
@@ -68,15 +68,28 @@
         </Border>
 
         <Grid x:Name="Page" Grid.Row="1" Grid.Column="1" Background="{StaticResource PaperBrush}" ClipToBounds="True">
-          <TextBox x:Name="Editor"
-                   AcceptsReturn="True" AcceptsTab="True" TextWrapping="Wrap"
-                   VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled"
-                   BorderThickness="0" Padding="0" Background="Transparent"
-                   Foreground="{StaticResource InkBrush}" CaretBrush="{StaticResource InkBrush}"
-                   FontFamily="{StaticResource PageFont}"
-                   FocusVisualStyle="{x:Null}" SpellCheck.IsEnabled="True"
-                   TextChanged="Editor_TextChanged"
-                   PreviewMouseWheel="Editor_PreviewMouseWheel"/>
+          <!-- Rich text only so each piece of text keeps its own size; bold,
+               italic, alignment and the like are switched off in code. -->
+          <RichTextBox x:Name="Editor"
+                       AcceptsReturn="True" AcceptsTab="True"
+                       VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled"
+                       BorderThickness="0" Padding="0" Background="Transparent"
+                       Foreground="{StaticResource InkBrush}" CaretBrush="{StaticResource InkBrush}"
+                       FontFamily="{StaticResource PageFont}"
+                       FocusVisualStyle="{x:Null}" SpellCheck.IsEnabled="True"
+                       TextChanged="Editor_TextChanged"
+                       SelectionChanged="Editor_SelectionChanged"
+                       PreviewTextInput="Editor_PreviewTextInput"
+                       PreviewKeyDown="Editor_PreviewKeyDown"
+                       PreviewMouseLeftButtonDown="Editor_PreviewMouseLeftButtonDown"
+                       DataObject.Pasting="Editor_Pasting"
+                       PreviewMouseWheel="Editor_PreviewMouseWheel">
+            <RichTextBox.Resources>
+              <Style TargetType="Paragraph">
+                <Setter Property="Margin" Value="0"/>
+              </Style>
+            </RichTextBox.Resources>
+          </RichTextBox>
           <Canvas x:Name="Guides" IsHitTestVisible="False"/>
         </Grid>
 
