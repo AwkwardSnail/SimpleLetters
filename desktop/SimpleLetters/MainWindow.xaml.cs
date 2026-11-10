@@ -34,8 +34,9 @@ public partial class MainWindow : Window
 
     static readonly Brush GuideBrush = Frozen(new SolidColorBrush(Color.FromRgb(0x3C, 0x8C, 0x48)));
 
-    // Ctrl shortcuts the page accepts. Everything else (Ctrl+B, Ctrl+I, Ctrl+E,
-    // Ctrl+] and so on) would add formatting SimpleLetters doesn't offer.
+    // Ctrl shortcuts the page accepts, besides Ctrl+B, I and U (handled in
+    // MainWindow.Format.cs). Everything else (Ctrl+E, Ctrl+] and so on) would
+    // add formatting SimpleLetters doesn't offer.
     static readonly HashSet<Key> AllowedCtrlKeys =
     [
         Key.A, Key.C, Key.V, Key.X, Key.Z, Key.Y, Key.O, Key.S, Key.P,
@@ -101,9 +102,10 @@ public partial class MainWindow : Window
         Guides.Children.Add(valueLabel);
 
         currentSizePt = Math.Clamp(settings.FontSize, MinFontPt, MaxFontPt);
+        currentSerif = settings.Serif;
         ShowLetter(new Letter { Paragraphs = { new LetterParagraph { SizePt = currentSizePt } } });
         UpdateLayoutForMargins();
-        UpdateSizeControls();
+        UpdateFormatControls();
         SetZoom(settings.Zoom, remember: false);
         UpdateTitle();
 
@@ -303,46 +305,6 @@ public partial class MainWindow : Window
         }
     }
 
-    // -------------------------------------------------------------- Text size
-    //
-    // − and + change the size of what is typed next, from the caret onwards.
-    // Text already on the page keeps its size.
-
-    void UpdateSizeControls()
-    {
-        SizeLabel.Text = $"{currentSizePt:0.#} pt";
-        SmallerButton.IsEnabled = currentSizePt > MinFontPt;
-        LargerButton.IsEnabled = currentSizePt < MaxFontPt;
-    }
-
-    void ChangeFontSize(double delta)
-    {
-        currentSizePt = Math.Clamp(Math.Round(currentSizePt) + delta, MinFontPt, MaxFontPt);
-        settings.FontSize = currentSizePt; // new letters start at the last size used
-        settings.Save();
-        UpdateSizeControls();
-        Editor.LockCurrentUndoUnit();
-        PrepareSizeForTyping();
-        Editor.Focus();
-    }
-
-    void Smaller_Click(object sender, RoutedEventArgs e) => ChangeFontSize(-1);
-    void Larger_Click(object sender, RoutedEventArgs e) => ChangeFontSize(1);
-
-    /// <summary>
-    /// With nothing selected, sets the size the next typed text will use at the
-    /// caret, without touching any text already there.
-    /// </summary>
-    void PrepareSizeForTyping()
-    {
-        var selection = Editor.Selection;
-        if (!selection.IsEmpty) return;
-        double dip = PtToDip(currentSizePt);
-        if (selection.GetPropertyValue(TextElement.FontSizeProperty) is double existing && Math.Abs(existing - dip) < 0.01)
-            return;
-        selection.ApplyPropertyValue(TextElement.FontSizeProperty, dip);
-    }
-
     // ------------------------------------------------------------------ Editor
 
     void MarkDirty()
@@ -358,62 +320,7 @@ public partial class MainWindow : Window
         CheckOverflow();
     }
 
-    /// <summary>Moving the caret picks up the size of the text it is in.</summary>
-    void Editor_SelectionChanged(object sender, RoutedEventArgs e)
-    {
-        if (settingText) return;
-        if (Editor.Selection.GetPropertyValue(TextElement.FontSizeProperty) is double dip)
-        {
-            currentSizePt = Math.Clamp(DipToPt(dip), MinFontPt, MaxFontPt);
-            UpdateSizeControls();
-        }
-    }
-
-    void Editor_PreviewTextInput(object sender, TextCompositionEventArgs e)
-    {
-        // WPF would otherwise undo all continuous typing in one go; start a
-        // new undo step at each word instead.
-        if (e.Text == " ") Editor.LockCurrentUndoUnit();
-        PrepareSizeForTyping();
-    }
-
-    void Editor_PreviewKeyDown(object sender, KeyEventArgs e)
-    {
-        var key = e.Key == Key.System ? e.SystemKey : e.Key;
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control) && !AllowedCtrlKeys.Contains(key))
-        {
-            e.Handled = true; // no bold, italic, alignment, lists, etc.
-            return;
-        }
-
-        // A new line, or moving the caret, starts a new undo step.
-        if (key is Key.Enter or Key.Left or Key.Right or Key.Up or Key.Down
-                or Key.Home or Key.End or Key.PageUp or Key.PageDown)
-            Editor.LockCurrentUndoUnit();
-        if (key == Key.Enter) PrepareSizeForTyping(); // the new line starts in the current size
-    }
-
     void Editor_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) => Editor.LockCurrentUndoUnit();
-
-    /// <summary>Pastes as plain text in the current size, never with outside formatting.</summary>
-    void Editor_Pasting(object sender, DataObjectPastingEventArgs e)
-    {
-        e.CancelCommand();
-        if (e.DataObject.GetData(DataFormats.UnicodeText) is not string text) return;
-
-        Editor.BeginChange();
-        try
-        {
-            var selection = Editor.Selection;
-            selection.Text = text.Replace("\r\n", "\n").Replace('\r', '\n');
-            selection.ApplyPropertyValue(TextElement.FontSizeProperty, PtToDip(currentSizePt));
-            selection.Select(selection.End, selection.End);
-        }
-        finally
-        {
-            Editor.EndChange();
-        }
-    }
 
     /// <summary>The page doesn't scroll on its own: the mouse wheel scrolls the desk.</summary>
     void Editor_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
@@ -440,7 +347,7 @@ public partial class MainWindow : Window
 
     Letter CurrentLetter()
     {
-        var letter = Letter.FromFlowDocument(Editor.Document);
+        var letter = Letter.FromFlowDocument(Editor.Document, SerifFamily);
         letter.MarginTop = settings.MarginTop;
         letter.MarginBottom = settings.MarginBottom;
         letter.MarginLeft = settings.MarginLeft;
@@ -454,7 +361,7 @@ public partial class MainWindow : Window
         settingText = true;
         try
         {
-            Editor.Document = letter.ToFlowDocument(Editor.FontFamily, Editor.Foreground, currentSizePt);
+            Editor.Document = letter.ToFlowDocument(SansFamily, SerifFamily, Editor.Foreground, currentSizePt);
             Editor.CaretPosition = Editor.Document.ContentStart;
         }
         finally
@@ -567,7 +474,7 @@ public partial class MainWindow : Window
 
         // Print a copy built from the same model that gets saved, so the page
         // prints exactly as it would reopen.
-        var document = CurrentLetter().ToFlowDocument(Editor.FontFamily, Brushes.Black, currentSizePt);
+        var document = CurrentLetter().ToFlowDocument(SansFamily, SerifFamily, Brushes.Black, currentSizePt);
         document.PageWidth = Dip(PageWidthMm);
         document.PageHeight = Dip(PageHeightMm);
         document.PagePadding = new Thickness(Dip(settings.MarginLeft), Dip(settings.MarginTop),

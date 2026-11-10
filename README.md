@@ -1,7 +1,8 @@
 # SimpleLetters
 
-A plain word processor: one A4 page, and you write on it. The only things you
-can change are the margins and the font size.
+A plain word processor: one A4 page, and you write on it. You can change the
+margins, the text size, plain or serif letters, and bold, italic and underline.
+That's all.
 
 Made by [aWkward sn@ail](https://awkwardsnail.com.au): calm, simple tools that
 stay the way you left them.
@@ -20,13 +21,21 @@ stay the way you left them.
 - **Text size:** the − and + buttons in the toolbar set the size of what you
   type next, from where the cursor is. Text already on the page keeps its size.
   Moving the cursor into existing text picks up that text's size.
+- **Sans or Serif:** plain letters (Atkinson Hyperlegible Next) or letters with
+  serifs (Literata). New letters start in the last one you used.
+- **Bold, italic, underline:** the B, I and U buttons, or Ctrl+B, Ctrl+I and
+  Ctrl+U. With text selected, these and Sans/Serif change the selection; with
+  nothing selected, they apply to what you type next. The buttons light up to
+  show the look of the text at the cursor.
+- **Zoom:** makes the page bigger or smaller on screen (or hold Ctrl and turn
+  the mouse wheel). It doesn't change the letter or how it prints.
 - **Open, Save, Print, Undo, Redo:** toolbar buttons, or Ctrl+O, Ctrl+S, Ctrl+P,
   Ctrl+Z and Ctrl+Y. Undo goes back a word at a time.
 
 ## The .sletter format
 
 Letters are saved as `.sletter` files: plain XML holding the margins and the
-text with its sizes, so they're easy to read without SimpleLetters.
+text with its sizes and styles, so they're easy to read without SimpleLetters.
 
 ```xml
 <sletter version="1">
@@ -38,7 +47,7 @@ text with its sizes, so they're easy to read without SimpleLetters.
     <p size="12" />
     <p size="12">
       <run size="12">Thank you for </run>
-      <run size="16">everything</run>
+      <run size="16" font="serif" bold="true">everything</run>
       <br size="12" />
     </p>
   </text>
@@ -46,7 +55,9 @@ text with its sizes, so they're easy to read without SimpleLetters.
 ```
 
 `p` is a paragraph, `run` is text in one size (in points), and `br` is a line
-break within a paragraph (Shift+Enter). SimpleLetters can also open plain `.txt`
+break within a paragraph (Shift+Enter). A `run` can also have `font="serif"`,
+`bold="true"`, `italic="true"` and `underline="true"`; without them it is plain
+Sans. Older `.sletter` files open unchanged. SimpleLetters can also open plain `.txt`
 files and save them as letters.
 
 ## Running
@@ -67,10 +78,15 @@ python -m http.server 8174
 
 ## Font
 
-Text is set in [Atkinson Hyperlegible Next](https://github.com/googlefonts/atkinson-hyperlegible-next),
-designed by the Braille Institute for easy reading. It's bundled in `fonts/`
-under the SIL Open Font License 1.1 (see [fonts/OFL.txt](fonts/OFL.txt)), so
-the app never needs to download it.
+Sans text is set in [Atkinson Hyperlegible Next](https://github.com/googlefonts/atkinson-hyperlegible-next),
+designed by the Braille Institute for easy reading. Serif text is set in
+[Literata](https://github.com/googlefonts/literata), designed for long reading
+on screen and in print. Both are under the SIL Open Font License 1.1 and are
+bundled with the app (see `desktop/SimpleLetters/Fonts/OFL.txt` and
+`OFL-Literata.txt`), so it never needs to download them.
+
+The browser version is the earlier, simpler one: one font and text size for the
+whole page, without zoom, styles or `.sletter` files.
 
 ## Privacy
 
