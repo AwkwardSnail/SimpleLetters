@@ -40,13 +40,24 @@
         <TextBlock x:Name="SizeLabel" Text="12 pt" MinWidth="56" TextAlignment="Center" VerticalAlignment="Center"/>
         <Button x:Name="LargerButton" Style="{StaticResource StepperButton}" Content="+"
                 Click="Larger_Click" ToolTip="Larger text from here on"/>
+
+        <Border Style="{StaticResource Separator}"/>
+
+        <TextBlock Text="Zoom" Foreground="{StaticResource GreenDimBrush}"
+                   VerticalAlignment="Center" Margin="0,0,10,0"/>
+        <Button x:Name="ZoomOutButton" Style="{StaticResource StepperButton}" Content="−"
+                Click="ZoomOut_Click" ToolTip="Make the page smaller on screen (Ctrl + mouse wheel)"/>
+        <TextBlock x:Name="ZoomLabel" Text="100%" MinWidth="56" TextAlignment="Center" VerticalAlignment="Center"/>
+        <Button x:Name="ZoomInButton" Style="{StaticResource StepperButton}" Content="+"
+                Click="ZoomIn_Click" ToolTip="Make the page bigger on screen (Ctrl + mouse wheel)"/>
       </WrapPanel>
     </Border>
 
     <!-- The desk with the A4 page. The arrows above and to the left of the page
          mark the margins: click one to show its line, drag it to move it. -->
-    <ScrollViewer x:Name="Desk" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Focusable="False">
-      <Grid HorizontalAlignment="Center" Margin="12,20,40,48">
+    <ScrollViewer x:Name="Desk" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Focusable="False"
+                  PreviewMouseWheel="Desk_PreviewMouseWheel">
+      <Grid x:Name="DeskContent" HorizontalAlignment="Center" Margin="12,20,40,48">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="28"/>
           <ColumnDefinition Width="Auto"/>

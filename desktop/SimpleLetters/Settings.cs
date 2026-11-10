@@ -16,6 +16,8 @@ public sealed class Settings
     public double MarginLeft { get; set; } = 25;
     public double MarginRight { get; set; } = 25;
     public double FontSize { get; set; } = 12;
+    /// <summary>Page zoom on screen (1 = actual size).</summary>
+    public double Zoom { get; set; } = 1;
 
     public bool LineTop { get; set; }
     public bool LineBottom { get; set; }

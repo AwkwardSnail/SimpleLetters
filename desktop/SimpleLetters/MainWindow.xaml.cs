@@ -104,6 +104,7 @@ public partial class MainWindow : Window
         ShowLetter(new Letter { Paragraphs = { new LetterParagraph { SizePt = currentSizePt } } });
         UpdateLayoutForMargins();
         UpdateSizeControls();
+        SetZoom(settings.Zoom, remember: false);
         UpdateTitle();
 
         // Open a file passed on the command line (e.g. double-clicking a .sletter file).
