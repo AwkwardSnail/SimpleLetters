@@ -70,6 +70,12 @@ The Windows version is a .NET 10 WPF app in `desktop/SimpleLetters`:
 dotnet run --project desktop/SimpleLetters
 ```
 
+`packaging\pack.ps1` builds the MSIX package for the Microsoft Store (in
+`packaging\out\`). With Windows Developer Mode on, `packaging\pack.ps1 -Install`
+also installs it on your PC for testing: it appears in the Start menu and
+opens `.sletter` files, like the Store version. `packaging\generate-icons.ps1`
+makes the icons from `packaging\icon-master.png`.
+
 There's also an earlier browser version (`index.html`, `app.js`, `styles.css`)
 with just margins and one text size for the whole page, and no `.sletter`
 support. Serve the folder and open it:

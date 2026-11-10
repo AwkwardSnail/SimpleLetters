@@ -11,6 +11,8 @@
     <AssemblyName>SimpleLetters</AssemblyName>
     <Product>SimpleLetters</Product>
     <Version>1.0.0</Version>
+    <!-- The aWkward sn@ail icon, made by packaging\generate-icons.ps1. -->
+    <ApplicationIcon>app.ico</ApplicationIcon>
     <!-- The app is English only; leave out .NET's translated messages so the
          Store doesn't list languages SimpleLetters doesn't support. -->
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
