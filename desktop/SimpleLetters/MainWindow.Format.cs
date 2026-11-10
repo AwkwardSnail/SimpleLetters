@@ -33,8 +33,11 @@ public partial class MainWindow
 
     void UpdateFormatControls()
     {
-        SansButton.IsChecked = !currentSerif;
-        SerifButton.IsChecked = currentSerif;
+        FontButton.Content = currentSerif ? "Serif" : "Sans";
+        FontButton.FontFamily = currentSerif ? SerifFamily : SansFamily;
+        FontButton.ToolTip = currentSerif
+            ? "Letters with serifs (Literata). Press for plain letters."
+            : "Plain letters (Atkinson Hyperlegible Next). Press for letters with serifs.";
         BoldButton.IsChecked = currentBold;
         ItalicButton.IsChecked = currentItalic;
         UnderlineButton.IsChecked = currentUnderline;
@@ -50,15 +53,16 @@ public partial class MainWindow
         LargerButton.IsEnabled = currentSizePt < MaxFontPt;
     }
 
-    /// <summary>− and + change the size of what is typed next. Text already on the page keeps its size.</summary>
+    /// <summary>
+    /// − and + change the size. With text selected, the whole selection takes
+    /// the new size (one undo step); otherwise it applies to what is typed next.
+    /// </summary>
     void ChangeFontSize(double delta)
     {
         currentSizePt = Math.Clamp(Math.Round(currentSizePt) + delta, MinFontPt, MaxFontPt);
         settings.FontSize = currentSizePt; // new letters start at the last size used
         settings.Save();
-        UpdateSizeControls();
-        Editor.LockCurrentUndoUnit();
-        Editor.Focus();
+        ApplyToSelection(TextElement.FontSizeProperty, PtToDip(currentSizePt));
     }
 
     void Smaller_Click(object sender, RoutedEventArgs e) => ChangeFontSize(-1);
@@ -66,8 +70,7 @@ public partial class MainWindow
 
     // ------------------------------------------------- font and style
 
-    void Sans_Click(object sender, RoutedEventArgs e) => SetSerif(false);
-    void Serif_Click(object sender, RoutedEventArgs e) => SetSerif(true);
+    void Font_Click(object sender, RoutedEventArgs e) => SetSerif(!currentSerif);
     void Bold_Click(object sender, RoutedEventArgs e) => SetBold(!currentBold);
     void Italic_Click(object sender, RoutedEventArgs e) => SetItalic(!currentItalic);
     void Underline_Click(object sender, RoutedEventArgs e) => SetUnderline(!currentUnderline);
@@ -142,7 +145,9 @@ public partial class MainWindow
         var style = selection.GetPropertyValue(TextElement.FontStyleProperty);
         var decorations = selection.GetPropertyValue(Inline.TextDecorationsProperty);
         SetCurrentLook(new LetterRun(null,
-            size is double dip ? DipToPt(dip) : currentSizePt,
+            // Mixed sizes: show (and step − / + from) the size where the selection starts.
+            size is double dip ? DipToPt(dip)
+                : selection.Start.Parent is TextElement first ? DipToPt(first.FontSize) : currentSizePt,
             Serif: family is FontFamily f && f.Source == SerifFamily.Source,
             Bold: weight is FontWeight w && w.ToOpenTypeWeight() >= FontWeights.SemiBold.ToOpenTypeWeight(),
             Italic: style is FontStyle s && (s == FontStyles.Italic || s == FontStyles.Oblique),

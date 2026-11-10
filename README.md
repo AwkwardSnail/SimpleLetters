@@ -18,15 +18,17 @@ stay the way you left them.
   the page are the left and right margins; the two beside it are the top and
   bottom. Click an arrow to show or hide a solid line where that margin is, and
   drag it to move the margin.
-- **Text size:** the − and + buttons in the toolbar set the size of what you
-  type next, from where the cursor is. Text already on the page keeps its size.
-  Moving the cursor into existing text picks up that text's size.
-- **Sans or Serif:** plain letters (Atkinson Hyperlegible Next) or letters with
-  serifs (Literata). New letters start in the last one you used.
+- **Text size:** the − and + buttons in the toolbar. With text selected, they
+  resize the selection; with nothing selected, they set the size of what you
+  type next and the text already on the page keeps its size.
+- **Sans or Serif:** one button shows the font in use, Sans (Atkinson
+  Hyperlegible Next) or Serif (Literata); press it to switch. New letters start
+  in the last one you used.
 - **Bold, italic, underline:** the B, I and U buttons, or Ctrl+B, Ctrl+I and
-  Ctrl+U. With text selected, these and Sans/Serif change the selection; with
-  nothing selected, they apply to what you type next. The buttons light up to
-  show the look of the text at the cursor.
+  Ctrl+U.
+- With text selected, all of these change the selection (one undo step each);
+  with nothing selected, they apply to what you type next. Moving the cursor
+  into existing text picks up its look, and the buttons show it.
 - **Zoom:** makes the page bigger or smaller on screen (or hold Ctrl and turn
   the mouse wheel). It doesn't change the letter or how it prints.
 - **Open, Save, Print, Undo, Redo:** toolbar buttons, or Ctrl+O, Ctrl+S, Ctrl+P,

@@ -39,12 +39,9 @@
 
           <!-- Font and style: with text selected they change the selection;
                otherwise they apply to what you type next. -->
-          <ToggleButton x:Name="SansButton" Style="{StaticResource ToggleTool}" Content="Sans"
-                        FontFamily="{StaticResource PageFont}" Click="Sans_Click"
-                        ToolTip="Plain letters (Atkinson Hyperlegible Next)"/>
-          <ToggleButton x:Name="SerifButton" Style="{StaticResource ToggleTool}" Content="Serif"
-                        FontFamily="{StaticResource SerifFont}" Click="Serif_Click"
-                        ToolTip="Letters with serifs (Literata)"/>
+          <!-- One button: shows the font in use (in that font); press it to switch. -->
+          <Button x:Name="FontButton" Style="{StaticResource ToolButton}" MinWidth="66" Content="Sans"
+                  FontFamily="{StaticResource PageFont}" Click="Font_Click"/>
           <ToggleButton x:Name="BoldButton" Style="{StaticResource ToggleTool}" Margin="10,0,6,0" Click="Bold_Click"
                         ToolTip="Bold (Ctrl+B)">
             <TextBlock Text="B" FontWeight="Bold"/>
