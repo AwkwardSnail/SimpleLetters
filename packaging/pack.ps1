@@ -7,7 +7,7 @@
 # -Install copies the package layout to %USERPROFILE%\apps\SimpleLetters-dev and
 # registers it from there, so it shows in the Start menu and opens .sletter files
 # like the Store version, and rebuilding the project doesn't disturb it. Remove
-# it from Settings > Apps, or with: Get-AppxPackage AkwardSnail.SimpleLetters | Remove-AppxPackage
+# it from Settings > Apps, or with: Get-AppxPackage AkwardSnail.112365F140B3A | Remove-AppxPackage
 #
 # Output goes to packaging\out\. Needs the .NET SDK and the Windows 10/11 SDK
 # (makeappx, makepri).
