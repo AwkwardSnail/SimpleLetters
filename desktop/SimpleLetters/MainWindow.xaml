@@ -19,9 +19,6 @@
       <!-- Each group of controls wraps to the next line as a whole when the window is narrow. -->
       <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
         <StackPanel Orientation="Horizontal" Margin="0,2">
-          <TextBlock Text="SimpleLetters" FontFamily="Consolas" FontSize="20"
-                     VerticalAlignment="Center" Margin="0,0,24,0"/>
-
           <Button Style="{StaticResource ToolButton}" Command="Open" Content="Open" ToolTip="Open a letter (Ctrl+O)"/>
           <Button Style="{StaticResource ToolButton}" Command="Save" Content="Save" ToolTip="Save (Ctrl+S)"/>
           <Button Style="{StaticResource ToolButton}" Command="Print" Content="Print" ToolTip="Print on A4 (Ctrl+P)"/>
@@ -40,7 +37,7 @@
           <!-- Font and style: with text selected they change the selection;
                otherwise they apply to what you type next. -->
           <!-- One button: shows the font in use (in that font); press it to switch. -->
-          <Button x:Name="FontButton" Style="{StaticResource ToolButton}" MinWidth="66" Content="Sans"
+          <Button x:Name="FontButton" Style="{StaticResource ToolButton}" MinWidth="110" Content="Font: Sans"
                   FontFamily="{StaticResource PageFont}" Click="Font_Click"/>
           <ToggleButton x:Name="BoldButton" Style="{StaticResource ToggleTool}" Margin="10,0,6,0" Click="Bold_Click"
                         ToolTip="Bold (Ctrl+B)">
@@ -98,19 +95,22 @@
         <Canvas x:Name="TopRuler" Grid.Row="0" Grid.Column="1"/>
         <Canvas x:Name="SideRuler" Grid.Row="1" Grid.Column="0"/>
 
-        <!-- Shadow sits behind the page so the effect doesn't soften the text. -->
-        <Border x:Name="PageShadow" Grid.Row="1" Grid.Column="1" Background="{StaticResource PaperBrush}">
-          <Border.Effect>
-            <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.6" Color="Black"/>
-          </Border.Effect>
-        </Border>
+        <!-- The paper: one white A4 sheet per page, made in MainWindow.Pages.cs.
+             The shadows sit behind the text so the effect doesn't soften it. -->
+        <Canvas x:Name="Sheets" Grid.Row="1" Grid.Column="1"/>
 
-        <Grid x:Name="Page" Grid.Row="1" Grid.Column="1" Background="{StaticResource PaperBrush}" ClipToBounds="True">
+        <!-- Everything drawn on the sheets. Transparent, so the desk shows between pages. -->
+        <Grid x:Name="Page" Grid.Row="1" Grid.Column="1" Background="Transparent" ClipToBounds="True">
+          <!-- What you see: one picture of the editor's text per page (MainWindow.Pages.cs). -->
+          <Canvas x:Name="Slices" IsHitTestVisible="False" UseLayoutRounding="False"/>
+          <!-- The editor itself is one long column of text. It is kept invisible and
+               moved under the mouse, page by page, so clicks land on the right line. -->
+          <Canvas x:Name="EditorHost" Opacity="0" UseLayoutRounding="False">
           <!-- Rich text so each piece of text keeps its own size, font and style.
                Alignment, lists and the like are switched off in code. -->
           <RichTextBox x:Name="Editor"
                        AcceptsReturn="True" AcceptsTab="True"
-                       VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled"
+                       VerticalScrollBarVisibility="Disabled" HorizontalScrollBarVisibility="Disabled"
                        BorderThickness="0" Padding="0" Background="Transparent"
                        Foreground="{StaticResource InkBrush}" CaretBrush="{StaticResource InkBrush}"
                        FontFamily="{StaticResource PageFont}"
@@ -128,12 +128,10 @@
               </Style>
             </RichTextBox.Resources>
           </RichTextBox>
+          </Canvas>
           <Canvas x:Name="Guides" IsHitTestVisible="False"/>
         </Grid>
 
-        <TextBlock x:Name="OverflowNote" Grid.Row="2" Grid.Column="1" Visibility="Collapsed"
-                   Text="The text runs past the bottom of the page."
-                   Foreground="{StaticResource GreenDimBrush}" HorizontalAlignment="Center" Margin="0,14,0,0"/>
       </Grid>
     </ScrollViewer>
   </DockPanel>

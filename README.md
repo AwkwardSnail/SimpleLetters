@@ -14,6 +14,9 @@ stay the way you left them.
 
 ## Using it
 
+- **Pages:** when the writing reaches the bottom margin it carries on onto
+  another A4 page below, with a gap between the pages. Each page prints as its
+  own sheet.
 - **Margins:** the four arrows around the page mark the margins. The two above
   the page are the left and right margins; the two beside it are the top and
   bottom. Click an arrow to show or hide a solid line where that margin is, and
@@ -21,8 +24,8 @@ stay the way you left them.
 - **Text size:** the − and + buttons in the toolbar. With text selected, they
   resize the selection; with nothing selected, they set the size of what you
   type next and the text already on the page keeps its size.
-- **Sans or Serif:** one button shows the font in use, Sans (Atkinson
-  Hyperlegible Next) or Serif (Literata); press it to switch. New letters start
+- **Font:** one button shows the font in use, "Font: Sans" (Atkinson
+  Hyperlegible Next) or "Font: Serif" (Literata); press it to switch. New letters start
   in the last one you used.
 - **Bold, italic, underline:** the B, I and U buttons, or Ctrl+B, Ctrl+I and
   Ctrl+U.

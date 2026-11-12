@@ -3,8 +3,8 @@
   MSIX manifest for SimpleLetters.
   Identity Name, Identity Publisher and PublisherDisplayName must match Partner Center
   (Product management > Product identity) exactly, including the "Akward" spelling of
-  the package name prefix. The Name below follows the AkwardSnail.<App> pattern of the
-  other apps: check it against Partner Center once SimpleLetters is reserved there.
+  the package name prefix. Checked against Partner Center on 2026-11-12
+  (Store ID 9NBZMKN0DQ5G, PFN AkwardSnail.SimpleLetters_ktfm57pxn63ft).
   pack.ps1 sets Identity Version from its -Version parameter.
 -->
 <Package

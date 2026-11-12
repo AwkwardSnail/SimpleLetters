@@ -33,7 +33,7 @@ public partial class MainWindow
 
     void UpdateFormatControls()
     {
-        FontButton.Content = currentSerif ? "Serif" : "Sans";
+        FontButton.Content = currentSerif ? "Font: Serif" : "Font: Sans";
         FontButton.FontFamily = currentSerif ? SerifFamily : SansFamily;
         FontButton.ToolTip = currentSerif
             ? "Letters with serifs (Literata). Press for plain letters."

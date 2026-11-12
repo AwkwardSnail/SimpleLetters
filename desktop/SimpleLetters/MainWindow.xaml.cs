@@ -67,10 +67,12 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        Page.Width = PageShadow.Width = Dip(PageWidthMm);
-        Page.Height = PageShadow.Height = Dip(PageHeightMm);
+        Page.Width = Sheets.Width = Dip(PageWidthMm);
+        Page.Height = Sheets.Height = Dip(PageHeightMm);
         TopRuler.Width = Page.Width;
-        SideRuler.Height = Page.Height;
+        SideRuler.Height = Dip(PageHeightMm); // the side arrows sit beside the first page
+        SideRuler.VerticalAlignment = VerticalAlignment.Top;
+        InitPages();
 
         valueText = new TextBlock { Foreground = (Brush)FindResource("GreenBrush"), FontSize = 12 };
         valueLabel = new Border
@@ -125,9 +127,9 @@ public partial class MainWindow : Window
     {
         double top = settings.MarginTop, bottom = settings.MarginBottom;
         double left = settings.MarginLeft, right = settings.MarginRight;
-        double w = Page.Width, h = Page.Height;
+        double w = Page.Width, h = Dip(PageHeightMm);
 
-        Editor.Margin = new Thickness(Dip(left), Dip(top), Dip(right), Dip(bottom));
+        Editor.Width = w - Dip(left) - Dip(right);
 
         Place(Side.Left, Dip(left));
         Place(Side.Right, w - Dip(right));
@@ -148,7 +150,7 @@ public partial class MainWindow : Window
                 Canvas.SetTop(handle, 8); // tip touches the top of the page (ruler is 28 high)
                 line.X1 = line.X2 = at;
                 line.Y1 = 0;
-                line.Y2 = h;
+                line.Y2 = 100000; // down every page; clipped to the sheets
             }
             else
             {
@@ -161,7 +163,7 @@ public partial class MainWindow : Window
         }
 
         UpdateValueLabel();
-        CheckOverflow();
+        InvalidatePages();
     }
 
     /// <summary>Shows "Left margin 25 mm" beside an arrow while it is being dragged or has keyboard focus.</summary>
@@ -317,7 +319,8 @@ public partial class MainWindow : Window
     void Editor_TextChanged(object sender, TextChangedEventArgs e)
     {
         MarkDirty();
-        CheckOverflow();
+        scrollToCaret = true;
+        InvalidatePages();
     }
 
     void Editor_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e) => Editor.LockCurrentUndoUnit();
@@ -327,16 +330,6 @@ public partial class MainWindow : Window
     {
         Desk.ScrollToVerticalOffset(Desk.VerticalOffset - e.Delta);
         e.Handled = true;
-    }
-
-    void CheckOverflow()
-    {
-        // Wait for layout so the text's height is up to date.
-        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () =>
-        {
-            bool over = Editor.ExtentHeight > Editor.ViewportHeight + 0.5;
-            OverflowNote.Visibility = over ? Visibility.Visible : Visibility.Collapsed;
-        });
     }
 
     // ------------------------------------------------------------------- Files
@@ -369,7 +362,7 @@ public partial class MainWindow : Window
             settingText = false;
         }
         Editor_SelectionChanged(Editor, new RoutedEventArgs());
-        CheckOverflow();
+        InvalidatePages();
     }
 
     void Open_Executed(object sender, ExecutedRoutedEventArgs e)
